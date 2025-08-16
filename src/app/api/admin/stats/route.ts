@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     
     const recentDownloads = await prisma.redemption.count({
       where: {
-        createdAt: {
+        redeemedAt: {
           gte: thirtyDaysAgo
         }
       }
