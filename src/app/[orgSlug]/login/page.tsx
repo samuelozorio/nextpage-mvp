@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { OrganizationLoginForm } from "@/components/organization/login-form";
+import { OrganizationService } from "@/lib/services/organization.service";
 
 interface OrganizationLoginPageProps {
   params: Promise<{ orgSlug: string }>;
@@ -10,21 +11,12 @@ export default async function OrganizationLoginPage({
   params,
 }: OrganizationLoginPageProps) {
   const resolvedParams = await params;
+  const organizationService = new OrganizationService();
 
-  // Mock da organização para teste (depois será substituído pelo banco de dados)
-  // Simulando dados reais que viriam do banco
-  const organization = {
-    id: "1",
-    name: "Livraria Exemplo",
-    cnpj: "12.345.678/0001-90",
-    slug: resolvedParams.orgSlug,
-    logoUrl: null, // Testando fallback
-    loginImageUrl: null, // Testando fallback
-    coverHeroUrl: null,
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  // Buscar organização real do banco de dados
+  const organization = await organizationService.findBySlug(
+    resolvedParams.orgSlug
+  );
 
   if (!organization || !organization.isActive) {
     notFound();

@@ -1,64 +1,66 @@
-// Tipos base (mock por enquanto, depois será substituído pelo Prisma)
-export interface Organization {
-  id: string;
-  name: string;
-  cnpj: string;
-  slug: string;
-  logoUrl: string | null;
-  loginImageUrl: string | null;
-  coverHeroUrl: string | null;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import {
+  Organization,
+  User,
+  Ebook,
+  Redemption,
+  PointsImport,
+  UserRole,
+  ImportStatus,
+} from "@prisma/client";
 
-export interface User {
-  id: string;
-  cpf: string;
-  name: string;
-  email?: string;
-  role: string;
-  organizationId?: string;
-  firstAccess: boolean;
-  points: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// Tipos base do Prisma
+export type {
+  Organization,
+  User,
+  Ebook,
+  Redemption,
+  PointsImport,
+  UserRole,
+  ImportStatus,
+} from "@prisma/client";
 
-export interface Ebook {
-  id: string;
-  title: string;
-  description: string;
-  coverUrl: string | null;
-  fileUrl: string;
-  pointsRequired: number;
-  organizationId: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// Tipos com relacionamentos
+export type OrganizationWithUsers = Organization & {
+  users: User[];
+  _count?: {
+    users: number;
+    ebooks: number;
+    redemptions: number;
+  };
+};
 
-export interface Redemption {
-  id: string;
-  userId: string;
-  ebookId: string;
-  pointsSpent: number;
-  redeemedAt: Date;
-  createdAt: Date;
-}
+export type OrganizationWithDetails = Organization & {
+  users: User[];
+  pointsImports: PointsImport[];
+  ebooks: Ebook[];
+  redemptions: Redemption[];
+};
 
-export interface PointsImport {
-  id: string;
-  organizationId: string;
-  fileName: string;
-  status: string;
-  totalRows: number;
-  processedRows: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export type UserWithOrganization = User & {
+  organization?: Organization | null;
+  _count?: {
+    redemptions: number;
+  };
+};
 
-// DTOs
+export type EbookWithRedemptions = Ebook & {
+  redemptions: Redemption[];
+  _count?: {
+    redemptions: number;
+  };
+};
+
+export type RedemptionWithDetails = Redemption & {
+  user: User;
+  ebook: Ebook;
+  organization: Organization;
+};
+
+export type PointsImportWithDetails = PointsImport & {
+  organization: Organization;
+};
+
+// DTOs para formulários
 export interface CreateOrganizationDTO {
   name: string;
   cnpj: string;
@@ -79,26 +81,42 @@ export interface UpdateOrganizationDTO {
   isActive?: boolean;
 }
 
-// Tipos estendidos
-export interface OrganizationWithUsers extends Organization {
-  users: User[];
-  _count: {
-    users: number;
-    ebooks: number;
-    redemptions: number;
-  };
+export interface CreateUserDTO {
+  cpf: string;
+  email?: string;
+  fullName?: string;
+  password: string;
+  organizationId?: string;
+  role?: "ADMIN_MASTER" | "CLIENTE";
 }
 
-export interface OrganizationWithDetails extends Organization {
-  users: User[];
-  pointsImports: PointsImport[];
-  ebooks: Ebook[];
-  redemptions: (Redemption & {
-    user: User;
-    ebook: Ebook;
-  })[];
+export interface UpdateUserDTO {
+  id: string;
+  email?: string;
+  fullName?: string;
+  points?: number;
+  isActive?: boolean;
 }
 
-export interface UserWithOrganization extends User {
-  organization?: Organization;
+export interface CreateEbookDTO {
+  title: string;
+  author: string;
+  description?: string;
+  category?: string;
+  coverImageUrl?: string;
+  ebookFileUrl?: string;
+  pointsCost?: number;
+  organizationId?: string;
+}
+
+export interface UpdateEbookDTO {
+  id: string;
+  title?: string;
+  author?: string;
+  description?: string;
+  category?: string;
+  coverImageUrl?: string;
+  ebookFileUrl?: string;
+  pointsCost?: number;
+  isActive?: boolean;
 }

@@ -1,5 +1,9 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { prisma } from "@/lib/prisma";
+import { UserService } from "@/lib/services/user.service";
+
+const userService = new UserService();
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -11,49 +15,54 @@ export const authOptions: NextAuthOptions = {
         organizationSlug: { label: "Organização", type: "text" },
       },
       async authorize(credentials) {
-        // Mock de autenticação para teste
         if (!credentials?.cpf || !credentials?.password) {
           return null;
         }
 
-        // Admin master para teste
-        if (
-          credentials.cpf === "000.000.000-00" &&
-          credentials.password === "admin123"
-        ) {
-          return {
-            id: "1",
-            cpf: "000.000.000-00",
-            name: "Admin Master",
-            role: "ADMIN_MASTER",
-            firstAccess: false,
-            points: 0,
-          };
-        }
+        try {
+          let user;
 
-        // Cliente de teste
-        if (
-          credentials.cpf === "123.456.789-01" &&
-          credentials.password === "senha123"
-        ) {
-          return {
-            id: "2",
-            cpf: "123.456.789-01",
-            name: "João Silva",
-            role: "CLIENTE",
-            organizationId: "1",
-            organization: {
-              id: "1",
-              name: "Livraria Exemplo",
-              slug: "livraria-exemplo",
-              logoUrl: undefined,
-            },
-            firstAccess: false,
-            points: 150,
-          };
-        }
+          // Se tem organizationSlug, autenticar por organização
+          if (credentials.organizationSlug) {
+            user = await userService.authenticateByOrganization(
+              credentials.cpf,
+              credentials.password,
+              credentials.organizationSlug
+            );
+          } else {
+            // Autenticação admin (sem organização)
+            user = await userService.authenticate(
+              credentials.cpf,
+              credentials.password
+            );
+          }
 
-        return null;
+          if (!user) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            cpf: user.cpf,
+            email: user.email || undefined,
+            name: user.fullName || undefined,
+            role: user.role,
+            organizationId: user.organizationId || undefined,
+            organization: user.organization
+              ? {
+                  id: user.organization.id,
+                  name: user.organization.name,
+                  slug: user.organization.slug,
+                  logoUrl: user.organization.logoUrl || undefined,
+                }
+              : undefined,
+            firstAccess: user.firstAccess,
+            points: user.points,
+          };
+        } catch (error) {
+          console.error("Erro na autenticação:", error);
+          return null;
+        }
       },
     }),
   ],
