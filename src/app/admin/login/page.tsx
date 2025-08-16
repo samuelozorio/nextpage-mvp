@@ -59,12 +59,12 @@ export default function AdminLoginPage() {
         console.log("✅ Login bem-sucedido, redirecionando...");
         // Redirecionar para o dashboard do admin
         try {
-          await router.push("/admin/dashboard");
+          await router.push("/admin");
           console.log("🔄 Redirecionamento iniciado");
         } catch (redirectError) {
           console.log("❌ Erro no redirecionamento:", redirectError);
           // Fallback: redirecionamento manual
-          window.location.href = "/admin/dashboard";
+          window.location.href = "/admin";
         }
       } else {
         console.log("⚠️ Login não retornou ok nem error");
@@ -83,9 +83,7 @@ export default function AdminLoginPage() {
           <h1 className="text-3xl font-bold text-white mb-2">
             Admin Dashboard
           </h1>
-          <p className="text-gray-400">
-            Acesse o painel administrativo
-          </p>
+          <p className="text-gray-400">Acesse o painel administrativo</p>
         </div>
 
         <div className="bg-[#1a1a1a] shadow-lg rounded-lg p-6 border border-gray-800">
