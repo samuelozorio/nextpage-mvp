@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id            String         @id @default(cuid())
+  name          String
+  cnpj          String         @unique
+  slug          String         @unique
+  logoUrl       String?
+  loginImageUrl String?
+  coverHeroUrl  String?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  ebooks        Ebook[]
+  pointsImports PointsImport[]
+  redemptions   Redemption[]
+  users         User[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String          @id @default(cuid())
+  cpf            String          @unique
+  email          String?         @unique
+  fullName       String?
+  password       String
+  points         Int             @default(0)
+  role           UserRole        @default(CLIENTE)
+  organizationId String?
+  isActive       Boolean         @default(true)
+  firstAccess    Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  accounts       Account[]
+  pointsHistory  PointsHistory[]
+  redemptions    Redemption[]
+  sessions       Session[]
+  organization   Organization?   @relation(fields: [organizationId], references: [id])
+
+  @@map("users")
+}
+
+model Ebook {
+  id             String        @id @default(cuid())
+  title          String
+  author         String
+  description    String?
+  category       String?
+  coverImageUrl  String?
+  ebookFileUrl   String?
+  pointsCost     Int           @default(1)
+  isActive       Boolean       @default(true)
+  organizationId String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  redemptions    Redemption[]
+
+  @@map("ebooks")
+}
+
+model Redemption {
+  id             String       @id @default(cuid())
+  userId         String
+  ebookId        String
+  organizationId String
+  pointsUsed     Int          @default(1)
+  redeemedAt     DateTime     @default(now())
+  ebook          Ebook        @relation(fields: [ebookId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@unique([userId, ebookId])
+  @@map("redemptions")
+}
+
+model PointsHistory {
+  id                String        @id @default(cuid())
+  userId            String
+  pointsAdded       Int
+  sourceDescription String
+  pointsImportId    String?
+  createdAt         DateTime      @default(now())
+  pointsImport      PointsImport? @relation(fields: [pointsImportId], references: [id])
+  user              User          @relation(fields: [userId], references: [id])
+
+  @@map("points_history")
+}
+
+model PointsImport {
+  id             String          @id @default(cuid())
+  fileName       String
+  organizationId String
+  totalRecords   Int
+  successRecords Int             @default(0)
+  errorRecords   Int             @default(0)
+  status         ImportStatus    @default(PROCESSING)
+  errorDetails   String?
+  importedBy     String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  pointsHistory  PointsHistory[]
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+
+  @@map("points_imports")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+enum UserRole {
+  ADMIN_MASTER
+  CLIENTE
+}
+
+enum ImportStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+  PARTIAL
+}
