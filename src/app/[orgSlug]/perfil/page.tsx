@@ -56,9 +56,9 @@ export default function PerfilPage({ params }: PerfilPageProps) {
           <p className="text-gray-600">Gerencie suas informações pessoais</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="flex flex-col gap-8">
           {/* Informações Pessoais */}
-          <Card className="bg-white border border-gray-200">
+          <Card className="bg-white border border-gray-200 w-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
@@ -92,52 +92,6 @@ export default function PerfilPage({ params }: PerfilPageProps) {
                 <Input
                   id="cpf"
                   value={session?.user?.cpf || "000.000.000-00"}
-                  disabled
-                  className="mt-1"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Informações da Conta */}
-          <Card className="bg-white border border-gray-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Coins className="h-5 w-5" />
-                Informações da Conta
-              </CardTitle>
-              <CardDescription>
-                Dados da sua conta e organização
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="points">Saldo de Pontos</Label>
-                <Input
-                  id="points"
-                  value={`${session?.user?.points || 0} ebooks`}
-                  disabled
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="organization">Organização</Label>
-                <Input
-                  id="organization"
-                  value={session?.user?.organization?.name || "N/A"}
-                  disabled
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="role">Tipo de Usuário</Label>
-                <Input
-                  id="role"
-                  value={
-                    session?.user?.role === "CLIENTE"
-                      ? "Cliente"
-                      : "Administrador"
-                  }
                   disabled
                   className="mt-1"
                 />

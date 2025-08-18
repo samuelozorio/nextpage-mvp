@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
 
 interface ThemeContextType {
   isDark: boolean;
@@ -11,7 +10,6 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const [isDark, setIsDark] = useState(() => {
     // Inicializar com base na rota atual
     if (typeof window !== 'undefined') {
@@ -21,23 +19,43 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    // Detectar se estamos em uma rota administrativa
-    const isAdminRoute = pathname?.startsWith('/admin');
+    // Detectar se estamos em uma rota administrativa usando window.location
+    const isAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
     setIsDark(isAdminRoute);
 
     // Aplicar classe dark no elemento html (apenas se mudou)
-    const hasDarkClass = document.documentElement.classList.contains('dark');
-    if (isAdminRoute && !hasDarkClass) {
-      document.documentElement.classList.add('dark');
-    } else if (!isAdminRoute && hasDarkClass) {
-      document.documentElement.classList.remove('dark');
-    }
+    if (typeof document !== 'undefined') {
+      const hasDarkClass = document.documentElement.classList.contains('dark');
+      if (isAdminRoute && !hasDarkClass) {
+        document.documentElement.classList.add('dark');
+      } else if (!isAdminRoute && hasDarkClass) {
+        document.documentElement.classList.remove('dark');
+      }
 
-    // Garantir que a classe theme-loaded está presente
-    if (!document.documentElement.classList.contains('theme-loaded')) {
-      document.documentElement.classList.add('theme-loaded');
+      // Garantir que a classe theme-loaded está presente
+      if (!document.documentElement.classList.contains('theme-loaded')) {
+        document.documentElement.classList.add('theme-loaded');
+      }
     }
-  }, [pathname]);
+  }, []);
+
+  // Usar usePathname apenas se estivermos no cliente e o contexto estiver disponível
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname;
+      const isAdminRoute = pathname.startsWith('/admin');
+      setIsDark(isAdminRoute);
+
+      if (typeof document !== 'undefined') {
+        const hasDarkClass = document.documentElement.classList.contains('dark');
+        if (isAdminRoute && !hasDarkClass) {
+          document.documentElement.classList.add('dark');
+        } else if (!isAdminRoute && hasDarkClass) {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+    }
+  }, []);
 
   const setDark = (dark: boolean) => {
     setIsDark(dark);

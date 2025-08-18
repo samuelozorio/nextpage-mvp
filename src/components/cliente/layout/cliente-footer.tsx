@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { OrganizationService } from "@/lib/services/organization.service";
+
 
 interface ClienteFooterProps {
   orgSlug: string;
@@ -23,10 +23,17 @@ export function ClienteFooter({ orgSlug }: ClienteFooterProps) {
     const fetchOrganization = async () => {
       try {
         setLoading(true);
-        const organizationService = new OrganizationService();
-        const data = await organizationService.findBySlug(orgSlug);
-        if (data) {
+        console.log("Footer - Buscando organização com slug:", orgSlug);
+        const response = await fetch(`/api/organizations/${orgSlug}`);
+        
+        console.log("Footer - Status da resposta:", response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Footer - Organização recebida:", data);
           setOrganization(data);
+        } else {
+          console.error("Erro ao buscar organização:", response.statusText);
         }
       } catch (error) {
         console.error("Erro ao buscar organização:", error);
@@ -49,14 +56,17 @@ export function ClienteFooter({ orgSlug }: ClienteFooterProps) {
             {loading ? (
               <div className="w-72 h-16 bg-gray-200 rounded animate-pulse"></div>
             ) : organization?.logoUrl ? (
-              <Image
-                src={organization.logoUrl}
-                alt={`Logo ${organization.name}`}
-                width={280}
-                height={80}
-                className="h-20 w-auto object-contain"
-                priority
-              />
+              <>
+                {console.log("Footer - Exibindo logo:", organization.logoUrl)}
+                <Image
+                  src={organization.logoUrl}
+                  alt={`Logo ${organization.name}`}
+                  width={280}
+                  height={80}
+                  className="h-20 w-auto object-contain"
+                  priority
+                />
+              </>
             ) : (
               <div className="flex items-center justify-center w-72 h-16 bg-gray-100 rounded">
                 <span className="text-xl font-bold text-gray-600">

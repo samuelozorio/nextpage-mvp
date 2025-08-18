@@ -30,6 +30,11 @@ const sidebarItems = [
     href: "/admin/ebooks",
   },
   {
+    title: "Usuários",
+    icon: <User className="h-6 w-6" />,
+    href: "/admin/usuarios",
+  },
+  {
     title: "Configurações",
     icon: <Settings className="h-6 w-6" />,
     href: "#",
@@ -37,7 +42,7 @@ const sidebarItems = [
 ];
 
 export function AdminSidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   return (
     <nav className="flex flex-col grow justify-between items-start px-2 text-sm font-medium lg:px-4">
       <div className={"w-full"}>

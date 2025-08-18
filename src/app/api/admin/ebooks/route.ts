@@ -12,6 +12,13 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
 
+    console.log("API Ebooks - Parâmetros recebidos:", {
+      organizationId,
+      page,
+      limit,
+      search,
+    });
+
     const where: any = {
       isActive: true,
     };
@@ -32,8 +39,11 @@ export async function GET(request: NextRequest) {
     // Calcular offset para paginação
     const offset = (page - 1) * limit;
 
+    console.log("API Ebooks - Where clause:", where);
+
     // Buscar total de registros para paginação
     const total = await prisma.ebook.count({ where });
+    console.log("API Ebooks - Total de ebooks encontrados:", total);
 
     // Buscar ebooks com paginação
     const ebooks = await prisma.ebook.findMany({
@@ -59,12 +69,14 @@ export async function GET(request: NextRequest) {
       take: limit,
     });
 
+    console.log("API Ebooks - Ebooks retornados:", ebooks.length);
+
     // Calcular informações de paginação
     const totalPages = Math.ceil(total / limit);
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
 
-    return NextResponse.json({
+    const response = {
       ebooks,
       pagination: {
         page,
@@ -74,7 +86,10 @@ export async function GET(request: NextRequest) {
         hasNextPage,
         hasPrevPage,
       },
-    });
+    };
+
+    console.log("API Ebooks - Resposta final:", response);
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Erro ao buscar ebooks:", error);
     return NextResponse.json(

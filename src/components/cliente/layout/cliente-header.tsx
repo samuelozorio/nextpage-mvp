@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, Coins, Loader2 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
-import { OrganizationService } from "@/lib/services/organization.service";
+
 
 interface Organization {
   id: string;
@@ -45,10 +45,17 @@ export function ClienteHeader({ orgSlug }: ClienteHeaderProps) {
         const orgSlugToUse = orgSlug || userInfo?.organization?.slug;
         if (!orgSlugToUse) return;
 
-        const organizationService = new OrganizationService();
-        const data = await organizationService.findBySlug(orgSlugToUse);
-        if (data) {
+        console.log("Header - Buscando organização com slug:", orgSlugToUse);
+        const response = await fetch(`/api/organizations/${orgSlugToUse}`);
+        
+        console.log("Header - Status da resposta:", response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Header - Organização recebida:", data);
           setOrganization(data);
+        } else {
+          console.error("Erro ao buscar organização:", response.statusText);
         }
       } catch (error) {
         console.error("Erro ao buscar organização:", error);
@@ -113,13 +120,17 @@ export function ClienteHeader({ orgSlug }: ClienteHeaderProps) {
               <div className="w-32 h-6 bg-gray-200 rounded animate-pulse"></div>
             </div>
           ) : organization?.logoUrl ? (
-            <Image
-              src={organization.logoUrl}
-              alt={`Logo ${organization.name}`}
-              width={120}
-              height={40}
-              className="h-10 w-auto object-contain"
-            />
+            <>
+              {console.log("Header - Exibindo logo:", organization.logoUrl)}
+              <Image
+                src={organization.logoUrl}
+                alt={`Logo ${organization.name}`}
+                width={120}
+                height={40}
+                className="h-10 w-auto object-contain"
+                priority
+              />
+            </>
           ) : (
             <div className="flex items-center">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">

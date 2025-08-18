@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Image from "next/image";
 import {
   Card,
@@ -34,7 +35,6 @@ import {
   Download,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { OrganizationService } from "@/lib/services/organization.service";
 
 interface Ebook {
   id: string;
@@ -43,28 +43,20 @@ interface Ebook {
   category: string;
   coverImageUrl: string;
   description: string;
-  pointsRequired: number;
+  pointsCost: number;
   isActive: boolean;
   createdAt: string;
-  fileUrl?: string;
+  ebookFileUrl?: string;
+  organizationId: string;
 }
 
-interface CatalogoPageProps {
-  params: Promise<{
-    orgSlug: string;
-  }>;
-}
-
-export default function CatalogoPage({ params }: CatalogoPageProps) {
+export default function CatalogoPage() {
+  const routeParams = useParams<{ orgSlug: string }>();
   const [orgSlug, setOrgSlug] = useState<string>("");
   const [isParamsLoaded, setIsParamsLoaded] = useState(false);
-  const [ebooks, setEbooks] = useState<Ebook[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("recentes");
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [organization, setOrganization] = useState<any>(null);
   const [organizationLoading, setOrganizationLoading] = useState(true);
   const [userPoints, setUserPoints] = useState<number>(0);
@@ -76,15 +68,21 @@ export default function CatalogoPage({ params }: CatalogoPageProps) {
 
   const { toast } = useToast();
 
-  // Aguardar parâmetros dinâmicos
+  // Estados para ebooks
+  const [ebooks, setEbooks] = useState<Ebook[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Ler parâmetros dinâmicos do App Router (client-side)
   useEffect(() => {
-    const loadParams = async () => {
-      const resolvedParams = await params;
-      setOrgSlug(resolvedParams.orgSlug);
-      setIsParamsLoaded(true);
-    };
-    loadParams();
-  }, [params]);
+    if (!routeParams) return;
+    const newSlug =
+      (routeParams as unknown as { orgSlug?: string })?.orgSlug || "";
+    setOrgSlug(newSlug);
+    setIsParamsLoaded(true);
+  }, [routeParams]);
 
   // Buscar informações da organização e pontos do usuário
   useEffect(() => {
@@ -93,10 +91,18 @@ export default function CatalogoPage({ params }: CatalogoPageProps) {
     const fetchOrganization = async () => {
       try {
         setOrganizationLoading(true);
-        const organizationService = new OrganizationService();
-        const data = await organizationService.findBySlug(orgSlug);
-        if (data) {
+        console.log("Buscando organização com slug:", orgSlug);
+
+        const response = await fetch(`/api/organizations/${orgSlug}`);
+
+        console.log("Status da resposta da organização:", response.status);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Organização recebida:", data);
           setOrganization(data);
+        } else {
+          console.error("Erro ao buscar organização:", response.statusText);
         }
       } catch (error) {
         console.error("Erro ao buscar organização:", error);
@@ -118,53 +124,54 @@ export default function CatalogoPage({ params }: CatalogoPageProps) {
     fetchUserInfo();
   }, [orgSlug, isParamsLoaded]);
 
-  // Buscar ebooks do banco de dados
-  useEffect(() => {
-    if (!isParamsLoaded || !orgSlug) return;
+  // Função para buscar ebooks
+  const fetchEbooks = async (
+    page: number = 1,
+    limit: number = 12,
+    search: string = ""
+  ) => {
+    if (!orgSlug) return;
 
-    const fetchEbooks = async () => {
-      try {
-        setLoading(true);
-        // Por enquanto, usar dados mockados
-        const mockEbooks: Ebook[] = [
-          {
-            id: "1",
-            title: "O Guia Completo de Next.js",
-            author: "João Silva",
-            category: "Tecnologia",
-            coverImageUrl: "/images/ebook-cover-1.jpg",
-            description:
-              "Um guia completo para aprender Next.js do zero ao avançado.",
-            pointsRequired: 50,
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            fileUrl: "/ebooks/nextjs-guide.pdf",
-          },
-          {
-            id: "2",
-            title: "React para Iniciantes",
-            author: "Maria Santos",
-            category: "Programação",
-            coverImageUrl: "/images/ebook-cover-2.jpg",
-            description: "Aprenda React de forma simples e prática.",
-            pointsRequired: 30,
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            fileUrl: "/ebooks/react-guide.pdf",
-          },
-        ];
+    try {
+      setLoading(true);
+      setError(null);
 
-        setEbooks(mockEbooks);
-        setTotalPages(Math.ceil(mockEbooks.length / itemsPerPage));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro desconhecido");
-      } finally {
-        setLoading(false);
+      console.log("Buscando ebooks para orgSlug:", orgSlug);
+
+      const response = await fetch(
+        `/api/organizations/${orgSlug}/ebooks?page=${page}&limit=${limit}&search=${search}&sort=${sortBy}`
+      );
+
+      console.log("Status da resposta dos ebooks:", response.status);
+
+      if (!response.ok) {
+        throw new Error("Erro ao carregar ebooks");
       }
-    };
 
-    fetchEbooks();
-  }, [orgSlug, isParamsLoaded, currentPage, searchTerm, sortBy]);
+      const data = await response.json();
+      console.log("Ebooks recebidos:", data);
+
+      setEbooks(data.ebooks);
+      setTotal(data.total);
+      setTotalPages(data.totalPages);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
+      setError(errorMessage);
+      console.error("Erro ao buscar ebooks:", errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Buscar ebooks quando a organização for carregada
+  useEffect(() => {
+    console.log("useEffect ebooks - orgSlug:", orgSlug);
+    if (orgSlug && isParamsLoaded) {
+      console.log("Chamando fetchEbooks com orgSlug:", orgSlug);
+      fetchEbooks(currentPage, itemsPerPage, searchTerm);
+    }
+  }, [orgSlug, isParamsLoaded, currentPage, sortBy]); // Removido searchTerm para evitar busca automática
 
   // Função para abrir modal de download
   const handleDownloadClick = (ebook: Ebook) => {
@@ -206,17 +213,8 @@ export default function CatalogoPage({ params }: CatalogoPageProps) {
     setCurrentPage(page);
   };
 
-  // Filtrar ebooks baseado na busca
-  const ebooksFiltrados = ebooks.filter((ebook) => {
-    if (searchTerm) {
-      return (
-        ebook.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ebook.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ebook.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    return true;
-  });
+  // Usar ebooks diretamente da API (já filtrados)
+  const ebooksFiltrados = ebooks;
 
   if (error) {
     return (
@@ -265,22 +263,6 @@ export default function CatalogoPage({ params }: CatalogoPageProps) {
       <div className="relative -mt-24 max-w-7xl mx-auto px-6">
         <div className="bg-white rounded-t-3xl shadow-lg min-h-screen">
           <div className="pt-4 pb-8 px-8">
-            {/* Informações do usuário */}
-            <div className="mb-6 flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg">
-                <BookOpen className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-900">
-                  Saldo: {userPoints}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg">
-                <BookOpen className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium text-green-900">
-                  Ebooks na biblioteca: 0
-                </span>
-              </div>
-            </div>
-
             {/* Filtros */}
             <Card className="bg-white border border-gray-200 mb-8 shadow-sm">
               <CardContent className="pt-4 pb-4">
@@ -290,15 +272,27 @@ export default function CatalogoPage({ params }: CatalogoPageProps) {
                       placeholder="Buscar e-book..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          if (orgSlug) {
+                            fetchEbooks(1, itemsPerPage, searchTerm);
+                            setCurrentPage(1);
+                          }
+                        }
+                      }}
                       className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
                   <Button
                     type="button"
-                    className="bg-black text-white hover:bg-gray-800 px-6"
+                    variant="default"
+                    className="bg-black text-white hover:bg-gray-800 px-6 font-medium !bg-black !text-white"
                     onClick={() => {
-                      // A busca já acontece automaticamente quando o usuário digita
-                      // Este botão é apenas visual
+                      // Forçar nova busca com o termo atual
+                      if (orgSlug) {
+                        fetchEbooks(1, itemsPerPage, searchTerm);
+                        setCurrentPage(1); // Voltar para primeira página
+                      }
                     }}
                   >
                     <Search className="h-4 w-4 mr-2" />
@@ -318,58 +312,64 @@ export default function CatalogoPage({ params }: CatalogoPageProps) {
 
             {/* Grid de e-books */}
             {!loading && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {ebooksFiltrados.map((ebook) => {
-                  const hasEnoughPoints = userPoints >= ebook.pointsRequired;
+              <>
+                {console.log(
+                  "Catálogo - Ebooks filtrados:",
+                  ebooksFiltrados.length
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {ebooksFiltrados.map((ebook) => {
+                    const hasEnoughPoints = userPoints >= ebook.pointsCost;
 
-                  return (
-                    <Card
-                      key={ebook.id}
-                      className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-lg overflow-hidden group"
-                    >
-                      {/* Imagem do e-book */}
-                      <div className="relative h-48 overflow-hidden">
-                        {ebook.coverImageUrl ? (
-                          <Image
-                            src={ebook.coverImageUrl}
-                            alt={ebook.title}
-                            width={300}
-                            height={200}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                            <BookOpen className="h-12 w-12 text-gray-400" />
+                    return (
+                      <Card
+                        key={ebook.id}
+                        className="bg-white border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-lg overflow-hidden group flex flex-col"
+                      >
+                        {/* Imagem do e-book */}
+                        <div className="relative h-48 overflow-hidden">
+                          {ebook.coverImageUrl ? (
+                            <Image
+                              src={ebook.coverImageUrl}
+                              alt={ebook.title}
+                              width={300}
+                              height={200}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                              <BookOpen className="h-12 w-12 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Conteúdo do card */}
+                        <CardContent className="p-4 flex flex-col flex-1">
+                          <div className="flex-1 space-y-3">
+                            <div>
+                              <CardTitle className="text-base font-semibold line-clamp-2 mb-1 mt-2 text-gray-900">
+                                {ebook.title}
+                              </CardTitle>
+                              <CardDescription className="text-sm text-gray-600">
+                                por {ebook.author}
+                              </CardDescription>
+                            </div>
+
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>{ebook.category}</span>
+                            </div>
+
+                            <p className="text-sm text-gray-600 line-clamp-2">
+                              {ebook.description}
+                            </p>
                           </div>
-                        )}
-                      </div>
 
-                      {/* Conteúdo do card */}
-                      <CardContent className="p-4">
-                        <div className="space-y-3">
-                          <div>
-                            <CardTitle className="text-base font-semibold line-clamp-2 mb-1 text-gray-900">
-                              {ebook.title}
-                            </CardTitle>
-                            <CardDescription className="text-sm text-gray-600">
-                              por {ebook.author}
-                            </CardDescription>
-                          </div>
-
-                          <div className="flex items-center justify-between text-xs text-gray-500">
-                            <span>{ebook.category}</span>
-                            <span>{ebook.pointsRequired} pontos</span>
-                          </div>
-
-                          <p className="text-sm text-gray-600 line-clamp-2">
-                            {ebook.description}
-                          </p>
-
-                          {/* Botões em coluna - apenas 2 botões */}
-                          <div className="flex flex-col gap-2">
+                          {/* Botões em coluna - sempre na parte inferior */}
+                          <div className="flex flex-col gap-2 mt-4">
                             {/* Botão Baixar */}
                             <Button
-                              className="w-full"
+                              variant="default"
+                              className="w-full bg-black text-white hover:bg-gray-800 !bg-black !text-white"
                               size="sm"
                               disabled={!hasEnoughPoints || downloading}
                               onClick={() => handleDownloadClick(ebook)}
@@ -461,7 +461,8 @@ export default function CatalogoPage({ params }: CatalogoPageProps) {
                                   {/* Botão de download no modal */}
                                   <div className="flex gap-2 border-t border-black pt-4">
                                     <Button
-                                      className="flex-1 bg-black text-white hover:bg-gray-800"
+                                      variant="default"
+                                      className="flex-1 bg-black text-white hover:bg-gray-800 !bg-black !text-white"
                                       disabled={!hasEnoughPoints || downloading}
                                       onClick={() => {
                                         handleDownloadClick(ebook);
@@ -481,12 +482,12 @@ export default function CatalogoPage({ params }: CatalogoPageProps) {
                               </DialogContent>
                             </Dialog>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </>
             )}
 
             {/* Paginação */}
@@ -581,10 +582,10 @@ export default function CatalogoPage({ params }: CatalogoPageProps) {
             <DialogHeader>
               <DialogTitle>Confirmar Download</DialogTitle>
               <DialogDescription>
-                Você tem certeza que deseja baixar &quot;{selectedEbook.title}
+                Você tem certeza que deseja baixar &quot;{selectedEbook?.title}
                 &quot;?
                 <br />
-                <strong>Custo: {selectedEbook.pointsRequired} pontos</strong>
+                <strong>Custo: {selectedEbook?.pointsCost} pontos</strong>
                 <br />
                 <strong>Seu saldo: {userPoints} pontos</strong>
               </DialogDescription>
@@ -598,9 +599,11 @@ export default function CatalogoPage({ params }: CatalogoPageProps) {
                 Cancelar
               </Button>
               <Button
+                variant="default"
+                className="!bg-black !text-white hover:!bg-gray-800"
                 onClick={handleDownloadConfirm}
                 disabled={
-                  downloading || userPoints < selectedEbook.pointsRequired
+                  downloading || userPoints < (selectedEbook?.pointsCost || 0)
                 }
               >
                 {downloading ? (

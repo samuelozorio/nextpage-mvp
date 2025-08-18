@@ -54,6 +54,19 @@ export class OrganizationService {
   async findBySlug(slug: string) {
     return await prisma.organization.findUnique({
       where: { slug },
+      include: {
+        ebooks: {
+          where: { isActive: true },
+          orderBy: { createdAt: "desc" },
+        },
+        _count: {
+          select: {
+            users: true,
+            ebooks: true,
+            redemptions: true,
+          },
+        },
+      },
     });
   }
 

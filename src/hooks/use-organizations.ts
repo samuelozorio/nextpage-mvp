@@ -77,7 +77,34 @@ export function useOrganizations(options: UseOrganizationsOptions = {}) {
     fetchOrganizations();
   }, [page, limit, search, status]);
 
-  return { organizations, pagination, loading, error };
+  const getOrganizations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '1000', // Buscar todas as organizações
+      });
+
+      const response = await fetch(`/api/admin/organizations?${params}`);
+
+      if (!response.ok) {
+        throw new Error('Erro ao buscar organizações');
+      }
+
+      const data: OrganizationsResponse = await response.json();
+      return data;
+    } catch (err) {
+      console.error('Erro ao buscar organizações:', err);
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { organizations, pagination, loading, error, getOrganizations };
 }
 
 // Hook para operações CRUD individuais
