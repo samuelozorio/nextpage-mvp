@@ -8,7 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Função para fazer upload de imagem para o bucket
 export async function uploadImage(
   file: File,
-  bucket: 'logos' | 'login-images' | 'cover-hero',
+  bucket: 'logos' | 'login-images' | 'cover-hero' | 'ebooks' | 'ebook-covers',
   fileName?: string
 ): Promise<{ url: string; error: string | null }> {
   try {
@@ -39,7 +39,7 @@ export async function uploadImage(
 // Função para deletar imagem do bucket
 export async function deleteImage(
   url: string,
-  bucket: 'logos' | 'login-images' | 'cover-hero'
+  bucket: 'logos' | 'login-images' | 'cover-hero' | 'ebooks' | 'ebook-covers'
 ): Promise<{ error: string | null }> {
   try {
     // Extrair o nome do arquivo da URL
