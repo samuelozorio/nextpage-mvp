@@ -61,6 +61,19 @@ export type PointsImportWithDetails = PointsImport & {
 };
 
 // DTOs para formulários
+export interface Organization {
+  id: string;
+  name: string;
+  cnpj: string;
+  slug: string;
+  logoUrl?: string | null;
+  loginImageUrl?: string | null;
+  coverHeroUrl?: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface CreateOrganizationDTO {
   name: string;
   cnpj: string;
@@ -68,6 +81,7 @@ export interface CreateOrganizationDTO {
   logoUrl?: string;
   loginImageUrl?: string;
   coverHeroUrl?: string;
+  isActive?: boolean;
 }
 
 export interface UpdateOrganizationDTO {
@@ -81,13 +95,30 @@ export interface UpdateOrganizationDTO {
   isActive?: boolean;
 }
 
+export interface User {
+  id: string;
+  cpf: string;
+  email?: string | null;
+  fullName?: string | null;
+  password: string;
+  points: number;
+  role: 'ADMIN_MASTER' | 'CLIENTE';
+  organizationId?: string | null;
+  isActive: boolean;
+  firstAccess: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  organization?: Organization;
+}
+
 export interface CreateUserDTO {
   cpf: string;
   email?: string;
   fullName?: string;
   password: string;
   organizationId?: string;
-  role?: "ADMIN_MASTER" | "CLIENTE";
+  role?: 'ADMIN_MASTER' | 'CLIENTE';
+  points?: number;
 }
 
 export interface UpdateUserDTO {
@@ -96,6 +127,22 @@ export interface UpdateUserDTO {
   fullName?: string;
   points?: number;
   isActive?: boolean;
+}
+
+export interface Ebook {
+  id: string;
+  title: string;
+  author: string;
+  description?: string | null;
+  category?: string | null;
+  coverImageUrl?: string | null;
+  ebookFileUrl?: string | null;
+  pointsCost: number;
+  isActive: boolean;
+  organizationId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  organization?: Organization;
 }
 
 export interface CreateEbookDTO {
@@ -119,4 +166,38 @@ export interface UpdateEbookDTO {
   ebookFileUrl?: string;
   pointsCost?: number;
   isActive?: boolean;
+}
+
+export interface PointsImportRecord {
+  cpf: string;
+  points: number;
+  fullName?: string;
+  email?: string;
+}
+
+export interface PointsImportResult {
+  success: boolean;
+  totalRecords: number;
+  successRecords: number;
+  errorRecords: number;
+  errors: {
+    row: number;
+    cpf: string;
+    error: string;
+  }[];
+}
+
+export interface PointsImport {
+  id: string;
+  fileName: string;
+  organizationId: string;
+  totalRecords: number;
+  successRecords: number;
+  errorRecords: number;
+  status: 'PROCESSING' | 'COMPLETED' | 'PARTIAL' | 'ERROR';
+  errorDetails?: string | null;
+  importedBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  organization?: Organization;
 }

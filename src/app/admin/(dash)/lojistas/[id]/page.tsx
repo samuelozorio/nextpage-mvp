@@ -21,6 +21,7 @@ import {
   Calendar,
   Loader2,
   Upload,
+  FileSpreadsheet,
 } from "lucide-react";
 import Link from "next/link";
 import { useOrganization } from "@/hooks/use-organizations";
@@ -412,6 +413,15 @@ export default function DetalhesLojistaPage() {
               className="border-[#283031] text-white hover:bg-[#161d1d]"
             >
               Voltar
+            </Button>
+          </Link>
+          <Link href={`/admin/lojistas/${organization.id}/importar-pontos`}>
+            <Button
+              variant="outline"
+              className="border-[#283031] text-white hover:bg-[#161d1d]"
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Importar Pontos
             </Button>
           </Link>
           <Link href={`/admin/lojistas/${organization.id}/editar`}>

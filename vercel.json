@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "src/app/api/admin/organizations/[id]/import-points/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/admin/ebooks/upload-batch/route.ts": {
+      "maxDuration": 60
+    }
+  },
+  "env": {
+    "NODE_ENV": "production"
+  }
+}

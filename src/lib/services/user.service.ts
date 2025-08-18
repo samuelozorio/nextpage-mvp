@@ -104,4 +104,85 @@ export class UserService {
       };
     });
   }
+
+  // Criar ou atualizar usuário durante importação de planilha
+  async createOrUpdateFromImport(data: {
+    cpf: string;
+    points: number;
+    fullName?: string;
+    email?: string;
+    organizationId: string;
+    pointsImportId: string;
+  }) {
+    const { cpf, points, fullName, email, organizationId, pointsImportId } = data;
+
+    console.log(`👤 Processando usuário CPF ${cpf} com ${points} pontos`);
+
+    return await prisma.$transaction(async (tx) => {
+      // Verificar se usuário já existe
+      let user = await tx.user.findUnique({
+        where: { cpf },
+      });
+
+      if (user) {
+        console.log(`🔄 Atualizando usuário existente: ${user.fullName || user.cpf}`);
+        console.log(`🏢 Organização atual: ${user.organizationId}, Nova organização: ${organizationId}`);
+
+        // Verificar se o usuário já pertence a uma organização diferente
+        if (user.organizationId && user.organizationId !== organizationId) {
+          console.log(
+            `⚠️ ATENÇÃO: Usuário ${user.cpf} já pertence à organização ${user.organizationId}, mas está sendo importado para ${organizationId}`,
+          );
+        }
+
+        // Atualizar usuário existente
+        user = await tx.user.update({
+          where: { cpf },
+          data: {
+            points: {
+              increment: points,
+            },
+            // Atualizar dados se fornecidos e não existirem
+            ...(fullName && !user.fullName && { fullName }),
+            ...(email && !user.email && { email }),
+            // Associar à organização se não estiver associado
+            ...(user.organizationId === null && { organizationId }),
+          },
+        });
+        console.log(`✅ Usuário atualizado. Novos pontos: ${user.points}, Organização: ${user.organizationId}`);
+      } else {
+        console.log(`🆕 Criando novo usuário: ${fullName || cpf}`);
+        // Criar novo usuário
+        // Gerar senha temporária baseada no CPF
+        const tempPassword = cpf.slice(-6); // Últimos 6 dígitos do CPF
+        const hashedPassword = await bcrypt.hash(tempPassword, 12);
+
+        user = await tx.user.create({
+          data: {
+            cpf,
+            email,
+            fullName,
+            password: hashedPassword,
+            points,
+            organizationId,
+            firstAccess: true,
+          },
+        });
+        console.log(`✅ Novo usuário criado com ${user.points} pontos`);
+      }
+
+      // Registrar no histórico de pontos
+      await tx.pointsHistory.create({
+        data: {
+          userId: user.id,
+          pointsAdded: points,
+          sourceDescription: `Importação de planilha`,
+          pointsImportId,
+        },
+      });
+
+      console.log(`📝 Histórico de pontos registrado para usuário ${user.id}`);
+      return user;
+    });
+  }
 }
