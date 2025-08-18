@@ -78,7 +78,7 @@ model Redemption {
   organization   Organization @relation(fields: [organizationId], references: [id])
   user           User         @relation(fields: [userId], references: [id])
 
-  @@unique([userId, ebookId])
+  // @@unique([userId, ebookId]) // Removido para permitir downloads múltiplos
   @@map("redemptions")
 }
 

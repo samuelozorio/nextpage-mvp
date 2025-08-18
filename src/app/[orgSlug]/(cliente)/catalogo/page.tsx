@@ -35,6 +35,7 @@ import {
   Download,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { usePoints } from "@/contexts/points-context";
 
 interface Ebook {
   id: string;
@@ -59,7 +60,7 @@ export default function CatalogoPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [organization, setOrganization] = useState<any>(null);
   const [organizationLoading, setOrganizationLoading] = useState(true);
-  const [userPoints, setUserPoints] = useState<number>(0);
+  const { points, updatePoints } = usePoints();
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [selectedEbook, setSelectedEbook] = useState<Ebook | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -111,17 +112,7 @@ export default function CatalogoPage() {
       }
     };
 
-    const fetchUserInfo = async () => {
-      try {
-        // Por enquanto, usar dados mockados
-        setUserPoints(100); // Mock - depois será integrado com a sessão
-      } catch (error) {
-        console.error("Erro ao buscar informações do usuário:", error);
-      }
-    };
-
     fetchOrganization();
-    fetchUserInfo();
   }, [orgSlug, isParamsLoaded]);
 
   // Função para buscar ebooks
@@ -185,10 +176,59 @@ export default function CatalogoPage() {
 
     setDownloading(true);
     try {
-      // Mock do download
+      // Primeiro, processar o download (debitar pontos)
+      const downloadResult = await fetch("/api/ebooks/download", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ebookId: selectedEbook.id,
+          organizationId: organization.id,
+          pointsCost: selectedEbook.pointsCost,
+        }),
+      });
+
+      if (!downloadResult.ok) {
+        const errorData = await downloadResult.json();
+        throw new Error(errorData.error || "Erro ao processar download");
+      }
+
+      const result = await downloadResult.json();
+
+      // Atualizar pontos do usuário
+      await updatePoints();
+
+      // Depois, fazer o download do arquivo
+      const fileResponse = await fetch("/api/download-ebook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: selectedEbook.ebookFileUrl,
+          title: selectedEbook.title,
+          ebookId: selectedEbook.id,
+        }),
+      });
+
+      if (!fileResponse.ok) {
+        throw new Error("Erro ao baixar arquivo");
+      }
+
+      const blob = await fileResponse.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${selectedEbook.title}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
       toast({
         title: "Sucesso!",
-        description: "Download iniciado com sucesso",
+        description: result.message || "Download realizado com sucesso!",
       });
 
       setDownloadModalOpen(false);
@@ -319,7 +359,7 @@ export default function CatalogoPage() {
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {ebooksFiltrados.map((ebook) => {
-                    const hasEnoughPoints = userPoints >= ebook.pointsCost;
+                    const hasEnoughPoints = points >= ebook.pointsCost;
 
                     return (
                       <Card
@@ -578,16 +618,18 @@ export default function CatalogoPage() {
       {/* Modal de confirmação de download */}
       {selectedEbook && (
         <Dialog open={downloadModalOpen} onOpenChange={setDownloadModalOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md bg-white border border-gray-200">
             <DialogHeader>
-              <DialogTitle>Confirmar Download</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-black">
+                Confirmar Download
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
                 Você tem certeza que deseja baixar &quot;{selectedEbook?.title}
                 &quot;?
                 <br />
                 <strong>Custo: {selectedEbook?.pointsCost} pontos</strong>
                 <br />
-                <strong>Seu saldo: {userPoints} pontos</strong>
+                <strong>Seu saldo: {points} pontos</strong>
               </DialogDescription>
             </DialogHeader>
             <div className="flex gap-2">
@@ -595,6 +637,7 @@ export default function CatalogoPage() {
                 variant="outline"
                 onClick={() => setDownloadModalOpen(false)}
                 disabled={downloading}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
               >
                 Cancelar
               </Button>
@@ -603,7 +646,7 @@ export default function CatalogoPage() {
                 className="!bg-black !text-white hover:!bg-gray-800"
                 onClick={handleDownloadConfirm}
                 disabled={
-                  downloading || userPoints < (selectedEbook?.pointsCost || 0)
+                  downloading || points < (selectedEbook?.pointsCost || 0)
                 }
               >
                 {downloading ? (

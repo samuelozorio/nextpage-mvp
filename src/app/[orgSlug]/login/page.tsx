@@ -34,15 +34,6 @@ export default async function OrganizationLoginPage({
           priority
           sizes="(max-width: 768px) 100vw, 50vw"
         />
-
-        {/* Overlay com texto sempre presente */}
-        <div className="absolute inset-0 bg-black/40"></div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center text-white">
-            <h1 className="text-4xl font-bold mb-4">NextPage</h1>
-            <p className="text-xl">Sua biblioteca digital</p>
-          </div>
-        </div>
       </div>
 
       {/* Lado direito - Formulário */}

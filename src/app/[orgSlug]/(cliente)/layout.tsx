@@ -1,5 +1,6 @@
 import { ClienteHeader } from "@/components/cliente/layout/cliente-header";
 import { ClienteFooter } from "@/components/cliente/layout/cliente-footer";
+import { PointsProvider } from "@/contexts/points-context";
 
 interface ClienteLayoutProps {
   children: React.ReactNode;
@@ -14,10 +15,12 @@ export default async function ClienteLayout({
   const { orgSlug } = resolvedParams;
 
   return (
-    <div className="min-h-screen bg-white">
-      <ClienteHeader orgSlug={orgSlug} />
-      <main className="bg-white">{children}</main>
-      <ClienteFooter orgSlug={orgSlug} />
-    </div>
+    <PointsProvider>
+      <div className="min-h-screen bg-white">
+        <ClienteHeader orgSlug={orgSlug} />
+        <main className="bg-white">{children}</main>
+        <ClienteFooter orgSlug={orgSlug} />
+      </div>
+    </PointsProvider>
   );
 }

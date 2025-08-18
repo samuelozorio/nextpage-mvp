@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, Coins, Loader2 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
+import { usePoints } from "@/contexts/points-context";
 
 
 interface Organization {
@@ -30,6 +31,7 @@ interface ClienteHeaderProps {
 
 export function ClienteHeader({ orgSlug }: ClienteHeaderProps) {
   const { data: session } = useSession();
+  const { points, isLoading: pointsLoading } = usePoints();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [organizationLoading, setOrganizationLoading] = useState(true);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
@@ -78,7 +80,7 @@ export function ClienteHeader({ orgSlug }: ClienteHeaderProps) {
           id: session.user.id,
           name: session.user.name || "Usuário",
           email: session.user.email || "",
-          points: session.user.points || 0,
+          points: points, // Usar pontos do contexto
           organization: session.user.organization
             ? {
                 id: session.user.organization.id,
@@ -96,7 +98,7 @@ export function ClienteHeader({ orgSlug }: ClienteHeaderProps) {
     };
 
     fetchUserInfo();
-  }, [session]);
+  }, [session, points]); // Adicionar points como dependência
 
   const handleLogout = () => {
     const orgSlugToUse = orgSlug || userInfo?.organization?.slug || "";
@@ -168,11 +170,11 @@ export function ClienteHeader({ orgSlug }: ClienteHeaderProps) {
           {/* Saldo */}
           <div className="flex items-center gap-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
             <Coins className="h-4 w-4 text-blue-600" />
-            {loading ? (
+            {pointsLoading ? (
               <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
             ) : (
               <span className="text-blue-800 font-medium text-sm">
-                Saldo: {userInfo?.points || 0} ebooks
+                Saldo: {points} ebooks
               </span>
             )}
           </div>
