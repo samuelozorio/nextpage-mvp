@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db, connectDB } from "@/lib/db";
 
 export async function GET() {
   try {
-    const organizations = await prisma.organization.findMany({
+    // Garantir conexão com o banco
+    await connectDB();
+    
+    const organizations = await db.organization.findMany({
       where: {
         isActive: true,
       },
