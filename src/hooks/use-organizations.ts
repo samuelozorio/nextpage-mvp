@@ -56,12 +56,14 @@ export function useOrganizations(params?: {
 
     try {
       const searchParams = new URLSearchParams();
-      if (params?.page) searchParams.append('page', params.page.toString());
-      if (params?.limit) searchParams.append('limit', params.limit.toString());
-      if (params?.search) searchParams.append('search', params.search);
-      if (params?.status) searchParams.append('status', params.status);
+      if (params?.page) searchParams.append("page", params.page.toString());
+      if (params?.limit) searchParams.append("limit", params.limit.toString());
+      if (params?.search) searchParams.append("search", params.search);
+      if (params?.status) searchParams.append("status", params.status);
 
-      const url = `/api/admin/organizations${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+      const url = `/api/admin/organizations${
+        searchParams.toString() ? `?${searchParams.toString()}` : ""
+      }`;
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -209,5 +211,43 @@ export function useOrganization() {
     deleteOrganization,
     loading,
     error,
+  };
+}
+
+export function usePublicOrganizations() {
+  const [organizations, setOrganizations] = useState<OrganizationData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchOrganizations = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/organizations");
+
+      if (!response.ok) {
+        throw new Error("Erro ao buscar organizações");
+      }
+
+      const data = await response.json();
+      setOrganizations(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro desconhecido");
+      console.error("Erro ao buscar organizações:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
+
+  return {
+    organizations,
+    isLoading,
+    error,
+    refetch: fetchOrganizations,
   };
 }

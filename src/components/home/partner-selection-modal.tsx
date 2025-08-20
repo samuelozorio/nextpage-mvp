@@ -5,7 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Building2, ArrowRight, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useOrganizations, OrganizationData } from "@/hooks/use-organizations";
+import {
+  usePublicOrganizations,
+  OrganizationData,
+} from "@/hooks/use-organizations";
 import Image from "next/image";
 
 interface PartnerSelectionModalProps {
@@ -21,7 +24,7 @@ export function PartnerSelectionModal({
   const [filteredOrganizations, setFilteredOrganizations] = useState<
     OrganizationData[]
   >([]);
-  const { organizations, isLoading, error } = useOrganizations();
+  const { organizations, isLoading, error } = usePublicOrganizations();
   const router = useRouter();
 
   // Filtrar organizações baseado no termo de busca
