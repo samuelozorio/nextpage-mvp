@@ -1,0 +1,5 @@
+[33m6b17de0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m feat: otimiza conexões serverless Vercel-Supabase
+[33m4bd1f3f[m fix: corrige modal de parceiros e rota de login - adiciona usePublicOrganizations hook
+[33m92b8517[m fix: resolve TypeScript build errors and add pagination support to useOrganizations hook
+[33mcee2534[m feat: MVP completo - Sistema de ebooks com pontos
+[33md5c1a43[m feat(cliente): pontos em tempo real no header via PointsContext; fix(api): /api/user/points aceita email ou CPF e ajusta payload; feat(layout): PointsProvider no layout cliente; refactor(catálogo/biblioteca): usar contexto e atualizar pontos após download; fix(ts): tipagem em /api/download-ebook

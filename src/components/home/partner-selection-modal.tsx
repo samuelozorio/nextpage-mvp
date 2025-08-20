@@ -77,7 +77,7 @@ export function PartnerSelectionModal({
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <h2 className="text-3xl font-bold text-white mb-2">
-                      Escolha seu parceiro
+                      Escolha um de nossos parceiros
                     </h2>
                     <p className="text-gray-300 text-lg">
                       Selecione onde você possui uma conta para fazer login
