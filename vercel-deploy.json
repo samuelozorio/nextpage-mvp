@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "src/app/api/admin/organizations/[id]/import-points/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/admin/ebooks/upload-batch/route.ts": {
+      "maxDuration": 60
+    }
+  },
+  "regions": ["gru1"],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Connection",
+          "value": "keep-alive"
+        }
+      ]
+    }
+  ]
+}
