@@ -27,8 +27,7 @@ import { useOrganizations } from "@/hooks/use-organizations";
 export default function NovoUsuarioPage() {
   const router = useRouter();
   const { createUser, loading, error } = useUsers();
-  const { getOrganizations } = useOrganizations();
-  const [organizations, setOrganizations] = useState<any[]>([]);
+  const { organizations, isLoading: organizationsLoading } = useOrganizations();
   const [validationErrors, setValidationErrors] = useState<{
     [key: string]: string;
   }>({});
@@ -43,18 +42,7 @@ export default function NovoUsuarioPage() {
     organizationId: "",
   });
 
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
 
-  const fetchOrganizations = async () => {
-    try {
-      const data = await getOrganizations();
-      setOrganizations(data.organizations);
-    } catch (error) {
-      console.error("Erro ao buscar organizações:", error);
-    }
-  };
 
   const validateForm = () => {
     const errors: { [key: string]: string } = {};

@@ -41,7 +41,7 @@ export default function LojistasPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
 
-  const { organizations, pagination, loading, error } = useOrganizations({
+  const { organizations, pagination, isLoading, error } = useOrganizations({
     page: currentPage,
     limit: 10,
     search,
@@ -55,7 +55,7 @@ export default function LojistasPage() {
     (org) => org.isActive
   ).length;
   const totalUsers = organizations.reduce(
-    (sum, org) => sum + org._count.users,
+    (sum, org) => sum + (org._count?.users || 0),
     0
   );
   const avgUsersPerOrg =
@@ -117,7 +117,7 @@ export default function LojistasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {loading ? (
+              {isLoading ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
                 totalOrganizations
@@ -139,7 +139,7 @@ export default function LojistasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {loading ? (
+              {isLoading ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
                 activeOrganizations
@@ -163,7 +163,7 @@ export default function LojistasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {loading ? (
+              {isLoading ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
                 totalUsers
@@ -185,7 +185,7 @@ export default function LojistasPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
-              {loading ? (
+              {isLoading ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
               ) : (
                 avgUsersPerOrg
@@ -239,7 +239,7 @@ export default function LojistasPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-white" />
               <span className="ml-2 text-white">
@@ -300,10 +300,10 @@ export default function LojistasPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-white">
-                          {organization._count.users}
+                          {organization._count?.users || 0}
                         </TableCell>
                         <TableCell className="text-white">
-                          {organization._count.ebooks}
+                          {organization._count?.ebooks || 0}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {new Date(organization.createdAt).toLocaleDateString(

@@ -1,240 +1,213 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
-interface Organization {
+export interface OrganizationData {
   id: string;
   name: string;
-  cnpj: string;
   slug: string;
-  logoUrl: string | null;
-  loginImageUrl: string | null;
-  coverHeroUrl: string | null;
-  isActive: boolean;
+  logoUrl?: string;
+  cnpj: string;
+  description: string;
+  isActive?: boolean;
   createdAt: string;
-  updatedAt: string;
-  _count: {
+  _count?: {
     users: number;
     ebooks: number;
   };
 }
 
-interface OrganizationsResponse {
-  organizations: Organization[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
+export interface OrganizationFormData {
+  name: string;
+  cnpj: string;
+  slug: string;
+  logoUrl?: string;
+  loginImageUrl?: string;
+  coverHeroUrl?: string;
+  isActive?: boolean;
 }
 
-interface UseOrganizationsOptions {
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface OrganizationsResponse {
+  organizations: OrganizationData[];
+  pagination: PaginationInfo;
+}
+
+export function useOrganizations(params?: {
   page?: number;
   limit?: number;
   search?: string;
   status?: string;
-}
-
-export function useOrganizations(options: UseOrganizationsOptions = {}) {
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [pagination, setPagination] = useState<OrganizationsResponse['pagination'] | null>(null);
-  const [loading, setLoading] = useState(true);
+}) {
+  const [organizations, setOrganizations] = useState<OrganizationData[]>([]);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { page = 1, limit = 10, search = '', status = '' } = options;
+  const fetchOrganizations = async () => {
+    setIsLoading(true);
+    setError(null);
 
-  useEffect(() => {
-    async function fetchOrganizations() {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const params = new URLSearchParams({
-          page: page.toString(),
-          limit: limit.toString(),
-          ...(search && { search }),
-          ...(status && { status })
-        });
-
-        const response = await fetch(`/api/admin/organizations?${params}`);
-
-        if (!response.ok) {
-          throw new Error('Erro ao buscar organizações');
-        }
-
-        const data: OrganizationsResponse = await response.json();
-        setOrganizations(data.organizations);
-        setPagination(data.pagination);
-      } catch (err) {
-        console.error('Erro ao buscar organizações:', err);
-        setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchOrganizations();
-  }, [page, limit, search, status]);
-
-  const getOrganizations = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      const searchParams = new URLSearchParams();
+      if (params?.page) searchParams.append('page', params.page.toString());
+      if (params?.limit) searchParams.append('limit', params.limit.toString());
+      if (params?.search) searchParams.append('search', params.search);
+      if (params?.status) searchParams.append('status', params.status);
 
-      const params = new URLSearchParams({
-        page: '1',
-        limit: '1000', // Buscar todas as organizações
-      });
-
-      const response = await fetch(`/api/admin/organizations?${params}`);
+      const url = `/api/admin/organizations${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+      const response = await fetch(url);
 
       if (!response.ok) {
-        throw new Error('Erro ao buscar organizações');
+        throw new Error("Erro ao buscar organizações");
       }
 
       const data: OrganizationsResponse = await response.json();
-      return data;
+      setOrganizations(data.organizations);
+      setPagination(data.pagination);
     } catch (err) {
-      console.error('Erro ao buscar organizações:', err);
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      setError(err instanceof Error ? err.message : "Erro desconhecido");
+      console.error("Erro ao buscar organizações:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, [params?.page, params?.limit, params?.search, params?.status]);
+
+  return {
+    organizations,
+    pagination,
+    isLoading,
+    error,
+    refetch: fetchOrganizations,
+  };
+}
+
+export function useOrganization() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const getOrganization = async (id: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/admin/organizations/${id}`);
+
+      if (!response.ok) {
+        throw new Error("Erro ao buscar organização");
+      }
+
+      return await response.json();
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
+      setError(errorMessage);
+      console.error("Erro ao buscar organização:", err);
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  return { organizations, pagination, loading, error, getOrganizations };
-}
+  const updateOrganization = async (id: string, data: OrganizationFormData) => {
+    setLoading(true);
+    setError(null);
 
-// Hook para operações CRUD individuais
-export function useOrganization() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const createOrganization = async (data: {
-    name: string;
-    cnpj: string;
-    slug: string;
-    logoUrl?: string;
-    loginImageUrl?: string;
-    coverHeroUrl?: string;
-  }) => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch('/api/admin/organizations', {
-        method: 'POST',
+      const response = await fetch(`/api/admin/organizations/${id}`, {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao criar organização');
+        throw new Error("Erro ao atualizar organização");
       }
 
       return await response.json();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
       setError(errorMessage);
-      throw new Error(errorMessage);
+      console.error("Erro ao atualizar organização:", err);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  const updateOrganization = async (id: string, data: Partial<{
-    name: string;
-    cnpj: string;
-    slug: string;
-    logoUrl: string;
-    loginImageUrl: string;
-    coverHeroUrl: string;
-    isActive: boolean;
-  }>) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const createOrganization = async (data: OrganizationFormData) => {
+    setLoading(true);
+    setError(null);
 
-      const response = await fetch(`/api/admin/organizations/${id}`, {
-        method: 'PUT',
+    try {
+      const response = await fetch("/api/admin/organizations", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao atualizar organização');
+        throw new Error("Erro ao criar organização");
       }
 
       return await response.json();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
       setError(errorMessage);
-      throw new Error(errorMessage);
+      console.error("Erro ao criar organização:", err);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
   const deleteOrganization = async (id: string) => {
-    try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
+    try {
       const response = await fetch(`/api/admin/organizations/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao deletar organização');
+        throw new Error("Erro ao deletar organização");
       }
 
       return await response.json();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      const errorMessage =
+        err instanceof Error ? err.message : "Erro desconhecido";
       setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getOrganization = async (id: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch(`/api/admin/organizations/${id}`);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao buscar organização');
-      }
-
-      return await response.json();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      console.error("Erro ao deletar organização:", err);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
   return {
+    getOrganization,
+    updateOrganization,
+    createOrganization,
+    deleteOrganization,
     loading,
     error,
-    createOrganization,
-    updateOrganization,
-    deleteOrganization,
-    getOrganization,
   };
 }

@@ -118,7 +118,12 @@ export function OrganizationLoginForm({
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button
+            type="submit"
+            variant="outline"
+            className="w-full text-white bg-black hover:bg-black/80 hover:text-white"
+            disabled={isLoading}
+          >
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
         </form>

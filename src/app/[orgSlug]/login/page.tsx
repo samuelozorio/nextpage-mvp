@@ -51,7 +51,7 @@ export default async function OrganizationLoginPage({
               />
             ) : (
               <Image
-                src="/images/nextpage-logo.svg"
+                src="/images/nexpage-logo.png"
                 alt="NextPage Logo"
                 width={220}
                 height={120}
@@ -82,7 +82,17 @@ export default async function OrganizationLoginPage({
 
           {/* Footer */}
           <div className="mt-8 text-center text-xs text-gray-500">
-            <p>Powered by NextPage</p>
+            <p className="flex items-center justify-center gap-2">
+              Powered by{" "}
+              <Image
+                src="/images/nexpage-logo.png"
+                alt="NextPage"
+                width={200}
+                height={80}
+                className="h-5 w-auto"
+                priority
+              />
+            </p>
           </div>
         </div>
       </div>

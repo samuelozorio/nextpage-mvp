@@ -61,7 +61,7 @@ export type PointsImportWithDetails = PointsImport & {
 };
 
 // DTOs para formulários
-export interface Organization {
+export interface OrganizationForm {
   id: string;
   name: string;
   cnpj: string;
@@ -95,7 +95,7 @@ export interface UpdateOrganizationDTO {
   isActive?: boolean;
 }
 
-export interface User {
+export interface UserForm {
   id: string;
   cpf: string;
   email?: string | null;
@@ -129,7 +129,7 @@ export interface UpdateUserDTO {
   isActive?: boolean;
 }
 
-export interface Ebook {
+export interface EbookForm {
   id: string;
   title: string;
   author: string;
@@ -187,7 +187,7 @@ export interface PointsImportResult {
   }[];
 }
 
-export interface PointsImport {
+export interface PointsImportForm {
   id: string;
   fileName: string;
   organizationId: string;

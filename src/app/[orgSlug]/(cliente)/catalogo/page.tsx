@@ -276,7 +276,7 @@ export default function CatalogoPage() {
     <div className="bg-white min-h-screen w-full">
       {/* Hero Section com imagem de capa */}
       <div className="relative w-full">
-        <div className="relative h-96 md:h-[500px] lg:h-[600px] overflow-hidden w-full">
+        <div className="relative h-96 md:h-[500px] lg:h-[520px] overflow-hidden w-full">
           {organizationLoading ? (
             // Loading state para a imagem de capa
             <div className="w-full h-full bg-gray-200 animate-pulse flex items-center justify-center">

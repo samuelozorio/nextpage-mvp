@@ -57,8 +57,7 @@ export default function EditarUsuarioPage() {
   const params = useParams();
   const router = useRouter();
   const { getUser, updateUser, loading, error } = useUsers();
-  const { getOrganizations } = useOrganizations();
-  const [organizations, setOrganizations] = useState<any[]>([]);
+  const { organizations, isLoading: organizationsLoading } = useOrganizations();
   const [validationErrors, setValidationErrors] = useState<{
     [key: string]: string;
   }>({});
@@ -78,7 +77,6 @@ export default function EditarUsuarioPage() {
   useEffect(() => {
     if (params.id) {
       fetchUser();
-      fetchOrganizations();
     }
   }, [params.id]);
 
@@ -101,14 +99,7 @@ export default function EditarUsuarioPage() {
     }
   };
 
-  const fetchOrganizations = async () => {
-    try {
-      const data = await getOrganizations();
-      setOrganizations(data.organizations);
-    } catch (error) {
-      console.error("Erro ao buscar organizações:", error);
-    }
-  };
+
 
   const validateForm = () => {
     const errors: { [key: string]: string } = {};

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
-
 interface ClienteFooterProps {
   orgSlug: string;
 }
@@ -25,9 +24,9 @@ export function ClienteFooter({ orgSlug }: ClienteFooterProps) {
         setLoading(true);
         console.log("Footer - Buscando organização com slug:", orgSlug);
         const response = await fetch(`/api/organizations/${orgSlug}`);
-        
+
         console.log("Footer - Status da resposta:", response.status);
-        
+
         if (response.ok) {
           const data = await response.json();
           console.log("Footer - Organização recebida:", data);
@@ -90,10 +89,10 @@ export function ClienteFooter({ orgSlug }: ClienteFooterProps) {
           </div>
 
           {/* Powered by NextPage alinhado à direita */}
-          <div className="flex items-center gap-2 text-xs text-gray-500 self-end">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
             <span>Powered by</span>
             <Image
-              src="/images/nextpage-logo.svg"
+              src="/images/nexpage-logo.png"
               alt="NextPage"
               width={80}
               height={20}
